@@ -15,7 +15,7 @@ int Serial::setInterfaceAttribs(int fd, int speed, int parity)
 
     this->fd = fd;
 
-    if (tcgetattr (fd, &tty) != 0)
+    if (tcgetattr (this->fd, &tty) != 0)
     {
         cout << "Error from tcgetattr: " << strerror(errno);
         return -1;
@@ -74,7 +74,14 @@ void Serial::startRead() {
 }
 
 void Serial::readPort() {
+    size_t nrBytesRead = 0;
+    uint8_t *buffer;
+
     while (!readPortThreadStop) {
-        read()
+        nrBytesRead = read(fd, buffer, 50);
+
+        for (unsigned int i = 0; i < (nrBytesRead * sizeof (buffer)); i += sizeof (buffer)) {
+            data.push(buffer[i]);
+        }
     }
 }

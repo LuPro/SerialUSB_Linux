@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <queue>
 #include <thread>
+#include <iostream>
 
 using namespace std;
 
@@ -25,10 +26,11 @@ public:
 
     void startRead();
 
+    void readPort();
+
 private:
     int fd;
 
-    void readPort();
     thread *readPortThread;
     bool readPortThreadStop = false;
 };
