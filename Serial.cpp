@@ -71,17 +71,37 @@ void Serial::setBlocking (int fd, int should_block)
 
 void Serial::startRead() {
     readPortThread = new thread(&Serial::readPort, this);
+    cout << "starting sensor read thread" << endl;
 }
 
 void Serial::readPort() {
     size_t nrBytesRead = 0;
-    uint8_t *buffer;
+    unsigned int *buffer;
 
-    while (!readPortThreadStop) {
+    int i=1;
+    while (i) {
+    //while (!readPortThreadStop) {
+        cout << "before read" << endl;
+        cout << "sizeof buffer " << sizeof (buffer) << endl;
         nrBytesRead = read(fd, buffer, 50);
+        cout << "sizeof buffer " << sizeof (buffer) << endl;
 
-        for (unsigned int i = 0; i < (nrBytesRead * sizeof (buffer)); i += sizeof (buffer)) {
-            data.push(buffer[i]);
+        if (nrBytesRead != -1) {
+            cout << "after read, before loop" << endl;
+
+            cout << "nrBytesRead " << nrBytesRead << endl;
+            cout << "sizeof buffer " << sizeof (buffer) << endl;
+            for (unsigned int i = 0; i < sizeof (buffer); i += sizeof (typeof (buffer))) {
+                cout << "loop" << endl;
+                data.push(buffer[i]);
+                cout << "buffer value on i=" << i << "/" << nrBytesRead << ": " << buffer[i] << endl;
+            }
+            cout << "stopping read" << endl;
+        } else {
+            cout << "erronous read" << endl;
         }
+
+        i=0;
+        usleep(50);
     }
 }
