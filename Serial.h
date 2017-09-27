@@ -3,22 +3,32 @@
 
 #endif //SERIAL_H
 
-#include <string>
-#include <fstream>
-#include <vector>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
+#include <queue>
+#include <thread>
 
 using namespace std;
 
 class Serial {
 public:
     Serial();
+    ~Serial();
 
-    bool open(const string &port);
+    queue<uint8_t> data;
 
-    vector <uint8_t> read();
+    int setInterfaceAttribs (int fd, int speed, int parity);
+    void setBlocking (int fd, int should_block);
+
+    void startRead();
 
 private:
-    ifstream serial;
+    int fd;
 
-    bool readByte(uint8_t &data);
+    void readPort();
+    thread *readPortThread;
+    bool readPortThreadStop = false;
 };
