@@ -30,9 +30,10 @@ int Serial::setInterfaceAttribs(int fd, int speed, int parity)
     tty.c_iflag &= ~IGNBRK;         // disable break processing
     tty.c_lflag = 0;                // no signaling chars, no echo,
     // no canonical processing
-    tty.c_oflag = 0;                // no remapping, no delays
+
+    tty.c_oflag &= ~OPOST;                // no remapping, no delays
     tty.c_cc[VMIN]  = 0;            // read doesn't block
-    tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
+    tty.c_cc[VTIME] = 100;            // 0.5 seconds read timeout
 
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
 
@@ -76,32 +77,25 @@ void Serial::startRead() {
 
 void Serial::readPort() {
     size_t nrBytesRead = 0;
-    unsigned int *buffer;
+    uint8_t buffer[50];
 
-    int i=1;
-    while (i) {
-    //while (!readPortThreadStop) {
-        cout << "before read" << endl;
-        cout << "sizeof buffer " << sizeof (buffer) << endl;
+    while (!readPortThreadStop) {
         nrBytesRead = read(fd, buffer, 50);
-        cout << "sizeof buffer " << sizeof (buffer) << endl;
+        cout << nrBytesRead << " bytes read" << endl;
 
-        if (nrBytesRead != -1) {
-            cout << "after read, before loop" << endl;
-
-            cout << "nrBytesRead " << nrBytesRead << endl;
-            cout << "sizeof buffer " << sizeof (buffer) << endl;
-            for (unsigned int i = 0; i < sizeof (buffer); i += sizeof (typeof (buffer))) {
+        if (nrBytesRead > 0) {
+            for (unsigned int i = 0; i < nrBytesRead; i++) {
                 cout << "loop" << endl;
                 data.push(buffer[i]);
                 cout << "buffer value on i=" << i << "/" << nrBytesRead << ": " << buffer[i] << endl;
             }
             cout << "stopping read" << endl;
+        } else if (nrBytesRead == -1) {
+            cout << "erronous read, error: " << strerror(errno) << endl;
         } else {
-            cout << "erronous read" << endl;
+            cout << "no bytes read"<< endl;
         }
 
-        i=0;
-        usleep(50);
+        usleep(1000);
     }
 }

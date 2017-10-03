@@ -10,7 +10,7 @@ int main()
 
     char portName[] = "/dev/ttyACM0";
 
-    int fd = open (portName, O_RDONLY | O_NOCTTY | O_SYNC);
+    int fd = open (portName, O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0)
     {
         cout << "Error opening " << portName << " error code: " << strerror(errno) << endl;
