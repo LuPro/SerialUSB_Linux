@@ -4,18 +4,28 @@ Serial::Serial() {
 
 }
 
+Serial::Serial(char *portName, int speed, int parity, int shouldBlock) {
+    fd = open (portName, O_RDONLY | O_NOCTTY | O_SYNC);
+
+    if (fd < 0) {
+        cout << "Error opening " << portName << " error code: " << strerror(errno) << endl;
+    } else {
+        setInterfaceAttribs(speed, parity);
+        setBlocking(shouldBlock);
+    }
+    startRead();
+}
+
 Serial::~Serial() {
     delete readPortThread;
 }
 
-int Serial::setInterfaceAttribs(int fd, int speed, int parity)
+int Serial::setInterfaceAttribs(int speed, int parity)
 {
     struct termios tty;
     memset (&tty, 0, sizeof tty);
 
-    this->fd = fd;
-
-    if (tcgetattr (this->fd, &tty) != 0)
+    if (tcgetattr (fd, &tty) != 0)
     {
         cout << "Error from tcgetattr: " << strerror(errno);
         return -1;
@@ -52,7 +62,7 @@ int Serial::setInterfaceAttribs(int fd, int speed, int parity)
     return 0;
 }
 
-void Serial::setBlocking (int fd, int should_block)
+void Serial::setBlocking (int should_block)
 {
     struct termios tty;
     memset (&tty, 0, sizeof tty);
@@ -81,21 +91,41 @@ void Serial::readPort() {
 
     while (!readPortThreadStop) {
         nrBytesRead = read(fd, buffer, 50);
-        cout << nrBytesRead << " bytes read" << endl;
+        //cout << nrBytesRead << " bytes read" << endl;
 
         if (nrBytesRead > 0) {
             for (unsigned int i = 0; i < nrBytesRead; i++) {
-                cout << "loop" << endl;
                 data.push(buffer[i]);
-                cout << "buffer value on i=" << i << "/" << nrBytesRead << ": " << buffer[i] << endl;
+                //cout << "buffer value on i=" << i << "/" << nrBytesRead << ": " << to_string(buffer[i]) << endl;
             }
-            cout << "stopping read" << endl;
+            //cout << "stopping read" << endl;
         } else if (nrBytesRead == -1) {
-            cout << "erronous read, error: " << strerror(errno) << endl;
+            //cout << "erronous read, error: " << strerror(errno) << endl;
         } else {
-            cout << "no bytes read"<< endl;
+            //cout << "no bytes read"<< endl;
         }
 
-        usleep(1000);
+        usleep(7000);
     }
+}
+
+unsigned short Serial::bytesAvailable() {
+    return data.size();
+}
+
+uint8_t Serial::readQueue() {
+    uint8_t returnData = data.front();
+    data.pop();
+
+    return returnData;
+}
+
+vector <uint8_t> Serial::readQueue(const uint8_t &nrBytes) {
+    vector <uint8_t> returnData;
+    for (uint8_t i = 0; i < nrBytes; i++) {
+        returnData.push_back(data.front());
+        data.pop();
+    }
+
+    return returnData;
 }

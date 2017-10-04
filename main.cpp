@@ -6,11 +6,11 @@ using namespace std;
 
 int main()
 {
-    Serial serial;
-
     char portName[] = "/dev/ttyACM0";
 
-    int fd = open (portName, O_RDWR | O_NOCTTY | O_SYNC);
+    Serial serial(portName);
+
+    /*int fd = open (portName, O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0)
     {
         cout << "Error opening " << portName << " error code: " << strerror(errno) << endl;
@@ -21,12 +21,14 @@ int main()
     serial.setInterfaceAttribs(fd, B115200, 0);     // set speed to 115,200 bps, 8n1 (no parity)
     serial.setBlocking(fd, 0);                      // set no blocking
 
-    //serial.startRead();
-    serial.readPort();
+    serial.startRead();*/
 
-    for (unsigned int i = 0; i < 50 || i < serial.data.size(); i++) {
-        usleep(500);
-        cout << i << ":\t" << to_string(serial.data.front()) << endl;
+    while (1) {
+        if (serial.bytesAvailable() != 0) {
+            cout << to_string(serial.readQueue()) << endl;
+        } else {
+            usleep(10000);
+        }
     }
 
     return 0;
